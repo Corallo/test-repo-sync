@@ -1,0 +1,37 @@
+name: auto-sync
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the "main" branch
+  push:
+    branches: [ "main" ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+          
+      - name: Clone and sync
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+        run: |
+          echo $API_TOKEN_GITHUB
+          branch_name="Auto-sync-$(date +'%d/%m/%Y')"
+          destination_repo="https://x-access-token:$API_TOKEN_GITHUB@github.com/Corallo/test-repo-sync-staging.git"
+          destination_repo_name=test-repo-sync-staging
+          git config --global user.name "Corallo"
+          git config --global user.email "dellisanti.angelo@gmail.com"
+         
+          mkdir -p /tmp/sync_tmp
+          cd /tmp/sync_tmp
+          git clone $destination_repo
+          git -C ./$destination_repo_name checkout -b $branch_name 
+          cp -r $GITHUB_WORKSPACE/* ./$destination_repo_name/
+          git -C ./$destination_repo_name add .
+          git -C ./$destination_repo_name commit -m "Syncing with staging repo"
+          git -C ./$destination_repo_name push --set-upstream origin $branch_name 
