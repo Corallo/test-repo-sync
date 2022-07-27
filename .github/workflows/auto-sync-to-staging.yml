@@ -23,7 +23,7 @@ jobs:
           echo $API_TOKEN_GITHUB
           branch_name="Auto-sync-$(date +'%Y-%m-%d_%H.%M.%S')"
           public_repo_name=${{github.event.repository.name}}
-          destination_repo_name=${staging_repo_name}"-staging"
+          destination_repo_name=${public_repo_name}"-staging"
           destination_repo="https://github.com/Corallo/$destination_repo_name"
           git config --global user.name "Corallo"
           git config --global user.email "dellisanti.angelo@gmail.com"
