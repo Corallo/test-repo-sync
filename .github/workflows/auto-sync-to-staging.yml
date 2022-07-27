@@ -21,20 +21,32 @@ jobs:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
         run: |
           echo $API_TOKEN_GITHUB
-          branch_name="Auto-sync-$(date +'%d/%m/%Y')"
-          destination_repo="https://x-access-token:$API_TOKEN_GITHUB@github.com/Corallo/test-repo-sync-staging.git"
-          destination_repo_name=test-repo-sync-staging
+          branch_name="Auto-sync-$(date +'%Y-%m-%d_%H.%M.%S')"
+          public_repo_name=${{github.event.repository.name}}
+          destination_repo_name=${staging_repo_name"-staging"}
+          destination_repo="https://github.com/Corallo/$destination_repo_name"
           git config --global user.name "Corallo"
           git config --global user.email "dellisanti.angelo@gmail.com"
-         
-          mkdir -p /tmp/sync_tmp
+          
+          
+          sync_dir=/tmp/sync_tmp
+          mkdir -p $sync_dir
+          
+          echo 'echo $API_TOKEN_GITHUB' > $sync_dir/.git-askpass
+          export GIT_ASKPASS=$sync_dir/.git-askpass
+          chmod +x $sync_dir/.git-askpass
+          
           cd /tmp/sync_tmp
           git clone $destination_repo
-          git -C ./$destination_repo_name checkout -b $branch_name 
-          cp -r $GITHUB_WORKSPACE/* ./$destination_repo_name/
-          git -C ./$destination_repo_name add .
-          if git -C ./$destination_repo_name commit -m "Syncing with public repo" | grep -q 'nothing to commit, working tree clean'; then
+          cd ./$destination_repo_name
+          git checkout -b $branch_name 
+          rm $GITHUB_WORKSPACE/.github/workflows/auto-sync.yml
+          cp -r $GITHUB_WORKSPACE/* .
+          cp -r $GITHUB_WORKSPACE/.github/workflows/* ./.github/workflows/
+          git add .
+          if git commit -m "Syncing with staging repo" | grep -q 'nothing to commit, working tree clean'; then
             echo "Nothing to commit :)"
           else
-             git -C ./$destination_repo_name push --set-upstream origin $branch_name    
+             git push --set-upstream origin $branch_name    
           fi
+          
